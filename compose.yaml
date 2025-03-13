@@ -1,6 +1,31 @@
 ﻿services:
   rentacar:
-    image: rentacar
+    image: rentacar-api
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+      - 8081:8081
+    depends_on:
+      - database
+    networks:
+      - app
+  
+  database:
+    image: postgres:latest
+    container_name: rentacar-database
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ./containers/database:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge

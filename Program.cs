@@ -1,4 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using RentACar.Data;
+using RentACar.Enums;
+using RentACar.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +17,22 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options
+        .UseNpgsql(builder.Configuration.GetConnectionString("DbConnection"), o =>
+        {
+            // map enum types to their corresponding postgresql enum types
+            o.MapEnum<UserRole>("user_role");
+        })
+        .LogTo(Console.WriteLine);
+});
+
+builder.Services.AddControllers();
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -26,5 +46,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.MapControllers();
 
 app.Run();

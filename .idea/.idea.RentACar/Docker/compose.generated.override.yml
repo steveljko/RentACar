@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  rentacar:
+    build:
+      context: "/home/pad0/Projects/RentACar"
+      dockerfile: "Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net9.0/RentACar.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "rentacar-api:dev"
+    ports: []
+    volumes:
+    - "/home/pad0/Projects/RentACar:/app:rw"
+    - "/home/pad0/Projects/RentACar:/src:rw"
+    - "/home/pad0/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"
