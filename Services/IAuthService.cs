@@ -6,4 +6,6 @@ namespace RentACar.Services;
 public interface IAuthService
 {
     Task<User?> CreateUser(CreateUserDto createUserDto);
+
+    Task<TokenResponseDto?> Login(UserLoginDto userLoginDto);
 }

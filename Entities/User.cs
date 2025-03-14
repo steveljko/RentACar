@@ -12,7 +12,7 @@ public class User
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
-    public int id { get; set; }
+    public int Id { get; set; }
     
     [Column("name")]
     public string Name { get; set; }
