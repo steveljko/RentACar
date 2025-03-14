@@ -1,4 +1,47 @@
-@HostAddress = http://localhost:5290
+@HostAddress = http://localhost:8080/api/v1
+@Token = <pass jwt token>
 
-GET {{HostAddress}}/
+### Login
+POST {{HostAddress}}/auth/login
 Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "asd.asd123",
+  "password": "asd123123"
+}
+
+
+### Create Vehicle
+POST {{HostAddress}}/vehicles
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{Token}}
+
+{
+  "make": "Ford",
+  "model": "Mustang",
+  "year": 2020,
+  "fuelType": "petrol",
+  "color": "brown"
+}
+
+### Update Vehicle
+PUT {{HostAddress}}/vehicles/18
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{Token}}
+
+{
+  "make": "Ford",
+  "model": "Mustang",
+  "year": 2020,
+  "fuelType": "diesel",
+  "color": "brown"
+}
+
+### Update Vehicle
+DELETE {{HostAddress}}/vehicles/16
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{Token}}

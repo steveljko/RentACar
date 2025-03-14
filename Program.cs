@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -54,6 +55,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         {
             // map enum types to their corresponding postgresql enum types
             o.MapEnum<UserRole>("user_role");
+            o.MapEnum<FuelType>("fuel_type");
         })
         .LogTo(Console.WriteLine);
 });
@@ -78,7 +80,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+       options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); 
+    });
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
