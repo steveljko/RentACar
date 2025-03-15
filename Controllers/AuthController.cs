@@ -70,7 +70,6 @@ public class AuthController : ControllerBase
         {
             Name = user.Name,
             Username = user.Username,
-            Role = user.Role,
             CreatedAt = user.CreatedAt,
             UpdatedAt = user.UpdatedAt,
         };

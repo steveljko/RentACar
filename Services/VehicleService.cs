@@ -13,6 +13,11 @@ public class VehicleService : IVehicleService
     {
         _context = context;
     }
+
+    public async Task<Vehicle?> GetVehicleById(int vehicleId)
+    {
+        return await _context.Vehicles.FirstOrDefaultAsync(v => v.Id == vehicleId);
+    }
     
     public async Task<Vehicle?> CreateVehicle(CreateVehicleDto createVehicleDto)
     {

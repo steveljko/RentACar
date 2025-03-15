@@ -87,9 +87,12 @@ builder.Services
        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); 
     });
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IRentalService, RentalService>();
 
 var app = builder.Build();
 
