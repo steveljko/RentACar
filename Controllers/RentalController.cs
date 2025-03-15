@@ -61,4 +61,23 @@ public class RentalController : ControllerBase
             Rental = rental,
         });
     }
+
+    [HttpDelete("{rentalId}")]
+    [Authorize]
+    public async Task<IActionResult> CancelRent(int rentalId)
+    {
+        var user = await _userService.FetchCurrentUser();
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+        
+        var result = await _rentalService.CancelRent(rentalId, user.Id);
+        if (result is false)
+        {
+            return BadRequest(new { Message = "Rental not found or does not belong to the user." });
+        }
+
+        return Ok(new { Message = "Rental deleted successfully." });
+    }
 }

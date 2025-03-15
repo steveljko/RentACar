@@ -78,6 +78,20 @@ public class RentalService : IRentalService
             Rental = rental
         };
     }
+
+    public async Task<bool> CancelRent(int rentalId, int userId)
+    {
+        var rental = await _context.Rentals.FirstOrDefaultAsync(r => r.Id == rentalId && r.RentedBy == userId);
+        if (rental is null)
+        {
+            return false;
+        }
+
+        _context.Rentals.Remove(rental);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
     
     private async Task<bool> IsVehicleAvailable(Vehicle vehicle, DateTime startDate, DateTime endDate)
     {
