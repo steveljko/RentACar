@@ -10,15 +10,17 @@ public class RentalService : IRentalService
     private readonly AppDbContext _context;
     private readonly IUserService _userService;
     private readonly IVehicleService _vehicleService;
+    private readonly ICouponService _couponService;
 
-    public RentalService(AppDbContext context, IUserService userService, IVehicleService vehicleService)
+    public RentalService(AppDbContext context, IUserService userService, IVehicleService vehicleService, ICouponService couponService)
     {
         _context = context;
         _userService = userService;
         _vehicleService = vehicleService;
+        _couponService = couponService;
     }
     
-    public async Task<RentalResult> CreateRental(int vehicleId, int userId, DateTime startDate, DateTime endDate)
+    public async Task<RentalResult> CreateRental(int vehicleId, int userId, DateTime startDate, DateTime endDate, string? couponCode = null)
     {
         // Validate that the start date is not set in the past.
         if (startDate < DateTime.Now)
@@ -61,17 +63,62 @@ public class RentalService : IRentalService
             };
         }
         
+        var rentalDays = (endDate - startDate).Days;
+        var totalPrice = rentalDays * vehicle.PricePerDay;
+        int couponId = 0;
+        
+        if (!string.IsNullOrEmpty(couponCode))
+        {
+            var coupon = await _couponService.GetCouponByCode(couponCode);
+            if (coupon is null)
+            {
+                return new RentalResult
+                {
+                    Success = false,
+                    Error = "Invalid coupon code."
+                };
+            }
+            
+            // Check if user already reedem coupon?
+            if (await _couponService.CheckIfCouponIsAlreadyReedemedByUser(couponCode, userId))
+            {
+                return new RentalResult
+                {
+                    Success = false,
+                    Error = "You have already redeemed this coupon."
+                };
+            }
+
+            couponId = coupon.Id;
+            totalPrice -= totalPrice * (coupon.Discount / 100);
+        }
+        
         var rental = new Rental
         {
             VehicleId = vehicleId,
             RentedBy = userId,
             StartDate = startDate,
-            EndDate = endDate
+            EndDate = endDate,
+            TotalPrice = totalPrice
         };
     
-        _context.Rentals.AddAsync(rental);
+        await _context.Rentals.AddAsync(rental);
+
         await _context.SaveChangesAsync();
 
+        if (couponId != 0)
+        {
+            var couponRedeption = new CouponRedemption
+            {
+                RentalId = rental.Id,
+                CouponId = couponId,
+                UserId = userId,
+            };
+            
+            await _context.CouponRedemptions.AddAsync(couponRedeption);
+            await _context.SaveChangesAsync();
+        }
+        
         return new RentalResult
         {
             Success = true,

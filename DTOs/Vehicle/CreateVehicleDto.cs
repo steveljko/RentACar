@@ -19,6 +19,9 @@ public class CreateVehicleDto
     [Required(ErrorMessage = "Fuel type is required.")]
     public FuelType FuelType { get; set; }
     
+    [Required(ErrorMessage = "Price per day is required.")]
+    public float PricePerDay { get; set; }
+    
     [Required(ErrorMessage = "Color type is required.")]
     public string Color { get; set; }
 }

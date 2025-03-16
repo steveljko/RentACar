@@ -28,12 +28,13 @@ public class VehicleService : IVehicleService
             Year = createVehicleDto.Year,
             FuelType = createVehicleDto.FuelType,
             Color = createVehicleDto.Color,
+            PricePerDay = createVehicleDto.PricePerDay,
             IsAvailable = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
         };
         
-        _context.Vehicles.AddAsync(vehicle);
+        await _context.Vehicles.AddAsync(vehicle);
         await _context.SaveChangesAsync();
 
         return vehicle;
@@ -52,6 +53,7 @@ public class VehicleService : IVehicleService
         vehicle.Year = createVehicleDto.Year;
         vehicle.FuelType = createVehicleDto.FuelType;
         vehicle.Color = createVehicleDto.Color;
+        vehicle.PricePerDay = createVehicleDto.PricePerDay;
         vehicle.UpdatedAt = DateTime.UtcNow;
  
         _context.Vehicles.Update(vehicle);

@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Vehicle> Vehicles { get; set; }
     public DbSet<Rental> Rentals { get; set; }
+    public DbSet<Coupon> Coupons { get; set; }
+    public DbSet<CouponRedemption> CouponRedemptions { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

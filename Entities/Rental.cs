@@ -21,8 +21,11 @@ public class Rental
     [Column("end_date")]
     public DateTime EndDate { get; set; }
     
+    [Column("total_price")]
+    public float TotalPrice { get; set; }
+    
     [Column("rented_by")]
-    public int RentedBy { get; set;  }
+    public int RentedBy { get; set; }
 
     public virtual Vehicle Vehicle { get; set; }
     

@@ -30,7 +30,7 @@ public class RentalController : ControllerBase
             return Unauthorized();
         }
         
-        var result = await _rentalService.CreateRental(vehicleId, user.Id, createRentalDto.StartDate, createRentalDto.EndDate);
+        var result = await _rentalService.CreateRental(vehicleId, user.Id, createRentalDto.StartDate, createRentalDto.EndDate, createRentalDto?.CouponCode);
         if (!result.Success)
         {
             return BadRequest(new { Message = result.Error });
@@ -40,6 +40,7 @@ public class RentalController : ControllerBase
         {
             StartDate = result.Rental.StartDate,
             EndDate = result.Rental.EndDate,
+            TotalPrice = result.Rental.TotalPrice,
             Vehicle = new VehicleDto
             {
                 Make = result.Rental.Vehicle.Make,
