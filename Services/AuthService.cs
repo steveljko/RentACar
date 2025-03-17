@@ -45,7 +45,7 @@ public class AuthService : IAuthService
             UpdatedAt = DateTime.UtcNow,
         };
 
-        _context.Users.AddAsync(newUser);
+        await _context.Users.AddAsync(newUser);
         await _context.SaveChangesAsync();
 
         return newUser;

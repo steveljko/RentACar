@@ -31,36 +31,14 @@ public class RentalController : ControllerBase
         }
         
         var result = await _rentalService.CreateRental(vehicleId, user.Id, createRentalDto.StartDate, createRentalDto.EndDate, createRentalDto?.CouponCode);
-        if (!result.Success)
-        {
-            return BadRequest(new { Message = result.Error });
-        }
 
-        var rental = new RentalDto
-        {
-            StartDate = result.Rental.StartDate,
-            EndDate = result.Rental.EndDate,
-            TotalPrice = result.Rental.TotalPrice,
-            Vehicle = new VehicleDto
-            {
-                Make = result.Rental.Vehicle.Make,
-                Model = result.Rental.Vehicle.Model,
-                Year = result.Rental.Vehicle.Year,
-            },
-            Renter = new UserDto()
-            {
-                Name = result.Rental.Renter.Name,
-                Username = result.Rental.Renter.Username,
-                CreatedAt = result.Rental.Renter.CreatedAt,
-                UpdatedAt = result.Rental.Renter.UpdatedAt,
-            }
-        };
-
-        return Ok(new
-        {
-            Message = "Vehicle rented successfully.",
-            Rental = rental,
-        });
+        return result.Map<IActionResult>(
+            onFailure: error => BadRequest(error),
+            onSuccess: rental => Ok(new {
+                Message = "Vehicle is succesfully rented.",
+                Rental = rental
+            })
+        );
     }
 
     [HttpDelete("{rentalId}")]
@@ -74,11 +52,13 @@ public class RentalController : ControllerBase
         }
         
         var result = await _rentalService.CancelRent(rentalId, user.Id);
-        if (result is false)
-        {
-            return BadRequest(new { Message = "Rental not found or does not belong to the user." });
-        }
 
-        return Ok(new { Message = "Rental deleted successfully." });
+        return result.Map<IActionResult>(
+            onFailure: error => BadRequest(error),
+            onSuccess: rental => Ok(new {
+                Message = "Rental canceled successfully.",
+                Rental = rental
+            })
+        );
     }
 }

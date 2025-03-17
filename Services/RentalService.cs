@@ -20,47 +20,19 @@ public class RentalService : IRentalService
         _couponService = couponService;
     }
     
-    public async Task<RentalResult> CreateRental(int vehicleId, int userId, DateTime startDate, DateTime endDate, string? couponCode = null)
+    public async Task<Result<Rental>> CreateRental(int vehicleId, int userId, DateTime startDate, DateTime endDate, string? couponCode = null)
     {
-        // Validate that the start date is not set in the past.
-        if (startDate < DateTime.Now)
-        {
-            return new RentalResult
-            {
-                Success = false,
-                Error = "The start date cannot be in the past."
-            };
-        }
-
-        // Ensure that the start date occurs before the end date.
-        if (startDate > endDate)
-        {
-            return new RentalResult
-            {
-                Success = false,
-                Error = "The start date must be earlier than the end date."
-            };
-        }
-        
         // Check if vehicle with this id exists and get it.
         var vehicle = await _vehicleService.GetVehicleById(vehicleId);
         if (vehicle is null)
         {
-            return new RentalResult
-            {
-                Success = false,
-                Error = "Vehicle not found."
-            };
+            return Result<Rental>.Failure(new Error("Vehicle not found.", "VehicleNotFound"));
         }
         
         // Confirm that the vehicle is available for the specified rental period.
         if (!await IsVehicleAvailable(vehicle, startDate, endDate))
         {
-            return new RentalResult
-            {
-                Success = false,
-                Error = "Vehicle is not available." 
-            };
+            return Result<Rental>.Failure(new Error("Vehicle is not available.", "VehicleNotAvailableForRent"));
         }
         
         var rentalDays = (endDate - startDate).Days;
@@ -72,21 +44,19 @@ public class RentalService : IRentalService
             var coupon = await _couponService.GetCouponByCode(couponCode);
             if (coupon is null)
             {
-                return new RentalResult
-                {
-                    Success = false,
-                    Error = "Invalid coupon code."
-                };
+                return Result<Rental>.Failure(new Error("Invalid coupon code.", "InvalidCouponCode"));
             }
             
-            // Check if user already reedem coupon?
+            // Verify if the user has already redeemed the coupon
             if (await _couponService.CheckIfCouponIsAlreadyReedemedByUser(couponCode, userId))
             {
-                return new RentalResult
-                {
-                    Success = false,
-                    Error = "You have already redeemed this coupon."
-                };
+                return Result<Rental>.Failure(new Error("You have already redeemed this coupon.", "CouponAlreadyReedemed"));
+            }
+
+            // Ensure the coupon is active
+            if (coupon.Active is false)
+            {
+                return Result<Rental>.Failure(new Error("Coupon is currently deactivated.", "CouponInactive"));
             }
 
             couponId = coupon.Id;
@@ -103,9 +73,9 @@ public class RentalService : IRentalService
         };
     
         await _context.Rentals.AddAsync(rental);
-
         await _context.SaveChangesAsync();
 
+        // If the coupon is valid, add the user to the redemption record
         if (couponId != 0)
         {
             var couponRedeption = new CouponRedemption
@@ -119,25 +89,21 @@ public class RentalService : IRentalService
             await _context.SaveChangesAsync();
         }
         
-        return new RentalResult
-        {
-            Success = true,
-            Rental = rental
-        };
+        return Result<Rental>.Success(rental);
     }
 
-    public async Task<bool> CancelRent(int rentalId, int userId)
+    public async Task<Result<Rental>> CancelRent(int rentalId, int userId)
     {
         var rental = await _context.Rentals.FirstOrDefaultAsync(r => r.Id == rentalId && r.RentedBy == userId);
         if (rental is null)
         {
-            return false;
+            return Result<Rental>.Failure(new Error("Rental not found or does not belong to the user.", "RentalDoesntBelongToUser"));
         }
 
         _context.Rentals.Remove(rental);
         await _context.SaveChangesAsync();
 
-        return true;
+        return Result<Rental>.Success(rental);
     }
     
     private async Task<bool> IsVehicleAvailable(Vehicle vehicle, DateTime startDate, DateTime endDate)

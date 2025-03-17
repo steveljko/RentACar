@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using RentACar.Enums;
 
@@ -21,14 +22,15 @@ public class User
     public string Username { get; set; }
     
     [Column("password")]
+    [JsonIgnore]
     public string Password { get; set; }
 
     [Column("role")]
     public UserRole Role { get; set; }
-    
+
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
-    
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

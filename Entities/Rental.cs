@@ -24,6 +24,12 @@ public class Rental
     [Column("total_price")]
     public float TotalPrice { get; set; }
     
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("updated_at")]
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    
     [Column("rented_by")]
     public int RentedBy { get; set; }
 

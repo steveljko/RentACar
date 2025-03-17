@@ -5,6 +5,6 @@ namespace RentACar.Services;
 
 public interface IRentalService
 {
-    Task<RentalResult> CreateRental(int vehicleId, int userId, DateTime startDate, DateTime endDate, string? couponCode = null);
-    Task<bool> CancelRent(int rentalId, int userId);
+    Task<Result<Rental>> CreateRental(int vehicleId, int userId, DateTime startDate, DateTime endDate, string? couponCode = null);
+    Task<Result<Rental>> CancelRent(int rentalId, int userId);
 }
