@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RentACar.Data;
 using RentACar.DTOs.Vehicle;
 using RentACar.Entities;
+using RentACar.Enums;
 
 namespace RentACar.Services;
 
@@ -12,6 +13,46 @@ public class VehicleService : IVehicleService
     public VehicleService(AppDbContext context)
     {
         _context = context;
+    }
+
+    public async Task<List<Vehicle>> GetVehicles(
+        string? make, FuelType? fuelType,
+        int? priceStart, int? priceEnd,
+        DateTime? startDate, DateTime? endDate)
+    {
+        var q = _context.Vehicles.AsQueryable();
+        
+        if (make != null)
+        {
+            q = q.Where(v => v.Make == make);
+        }
+        
+        if (fuelType.HasValue)
+        {
+            q = q.Where(v => v.FuelType == fuelType);
+        }
+        
+        if (priceStart.HasValue)
+        {
+            q = q.Where(v => v.PricePerDay >= priceStart);
+        }
+        
+        if (priceEnd.HasValue)
+        {
+            q = q.Where(v => v.PricePerDay <= priceEnd);
+        }
+        
+        if (startDate.HasValue && endDate.HasValue) {
+            var rentedVehicleIds = await _context.Rentals
+                .Where(r => r.StartDate < endDate && r.EndDate > startDate)
+                .Select(r => r.VehicleId)
+                .ToListAsync();
+
+            q = q.Where(v => !rentedVehicleIds.Contains(v.Id));
+        }
+        
+        var vehicles = await q.ToListAsync();
+        return vehicles;
     }
 
     public async Task<Vehicle?> GetVehicleById(int vehicleId)

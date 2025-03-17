@@ -16,6 +16,15 @@ public class VehicleController : ControllerBase
     {
         _vehicleService = vehicleService;
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetVehicles(string? make, FuelType? fuelType, int? priceStart,
+        int? priceEnd, DateTime? startDate, DateTime? endDate)
+    {
+        var vehicles = await _vehicleService.GetVehicles(make, fuelType, priceStart, priceEnd, startDate, endDate);
+
+        return Ok(vehicles);
+    }
     
     [HttpPost]
     [Authorize(Roles = nameof(UserRole.Admin))]
