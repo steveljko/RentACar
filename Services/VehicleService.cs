@@ -9,10 +9,12 @@ namespace RentACar.Services;
 public class VehicleService : IVehicleService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<VehicleService> _logger;
 
-    public VehicleService(AppDbContext context)
+    public VehicleService(AppDbContext context, ILogger<VehicleService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<List<Vehicle>> GetVehicles(
@@ -52,12 +54,19 @@ public class VehicleService : IVehicleService
         }
         
         var vehicles = await q.ToListAsync();
+        
+        _logger.LogInformation("User fetched {vehiclesCount} vehicles.", vehicles.Count);
+        
         return vehicles;
     }
 
     public async Task<Vehicle?> GetVehicleById(int vehicleId)
     {
-        return await _context.Vehicles.FirstOrDefaultAsync(v => v.Id == vehicleId);
+        var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.Id == vehicleId);
+        if (vehicle is null)
+            _logger.LogInformation("User tried to find non-existent vehicle with provided ID {id}.", vehicleId);
+
+        return vehicle;
     }
     
     public async Task<Vehicle?> CreateVehicle(CreateVehicleDto createVehicleDto)
@@ -78,12 +87,14 @@ public class VehicleService : IVehicleService
         await _context.Vehicles.AddAsync(vehicle);
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation("User created new vehicle with ID {id}.", vehicle.Id);
+        
         return vehicle;
     }
 
     public async Task<Vehicle?> UpdateVehicle(int vehicleId, CreateVehicleDto createVehicleDto)
     {
-        var vehicle = await _context.Vehicles.FindAsync(vehicleId);
+        var vehicle = await GetVehicleById(vehicleId);
         if (vehicle is null)
         {
             return null;
@@ -100,22 +111,26 @@ public class VehicleService : IVehicleService
         _context.Vehicles.Update(vehicle);
         await _context.SaveChangesAsync();
  
+        _logger.LogInformation("User updated vehicle with ID {id}.", vehicle.Id);
+        
         return vehicle;
     }
     
     public async Task<bool?> DeleteVehicle(int vehicleId)
     {
-        var vehicle = await _context.Vehicles.FindAsync(vehicleId);
+        var vehicle = await GetVehicleById(vehicleId);
         if (vehicle is null)
         {
             return null;
         }
 
         _context.Vehicles.Remove(vehicle);
-        
+
         try
         {
             await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("User deleted vehicle with ID {id}.", vehicle.Id);
         }
         catch (DbUpdateException _)
         {

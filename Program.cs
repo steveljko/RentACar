@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using RentACar.Config;
 using RentACar.Data;
 using RentACar.Enums;
 using RentACar.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,8 +58,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
             // map enum types to their corresponding postgresql enum types
             o.MapEnum<UserRole>("user_role");
             o.MapEnum<FuelType>("fuel_type");
-        })
-        .LogTo(Console.WriteLine);
+        });
 });
 
 builder.Services.Configure<JwtConfiguration>(builder.Configuration.GetSection("JWT"));
@@ -77,6 +78,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Secret))
         };
     });
+
+builder.Host.UseSerilog((context, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddAuthorization();
 
@@ -105,8 +109,10 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
         options.RoutePrefix = string.Empty;
     });
+    Serilog.Debugging.SelfLog.Enable(Console.Error);
 }
 
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

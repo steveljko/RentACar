@@ -23,6 +23,11 @@ Content-Type: application/json
   "password": "testuser123123"
 }
 
+### List vehicles
+GET {{HostAddress}}/vehicles
+Accept: application/json
+Content-Type: application/json
+
 ### Create Vehicle [ADMIN]
 POST {{HostAddress}}/vehicles
 Accept: application/json

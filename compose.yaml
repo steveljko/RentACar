@@ -25,6 +25,19 @@
       - 5432:5432
     networks:
       - app
+  
+  seq:
+    image: datalust/seq
+    container_name: rentacar-seq
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - ./containers/seq:/data
+    ports:
+      - 5341:5341
+      - 80:80
+    networks:
+      - app
 
 networks:
   app:
