@@ -22,7 +22,7 @@ public class Rental
     public DateTime EndDate { get; set; }
     
     [Column("total_price")]
-    public float TotalPrice { get; set; }
+    public double TotalPrice { get; set; }
     
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

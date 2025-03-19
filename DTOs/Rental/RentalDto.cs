@@ -7,7 +7,7 @@ public class RentalDto
 {
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public float TotalPrice { get; set; }
+    public double TotalPrice { get; set; }
     public VehicleDto Vehicle { get; set; }
     public UserDto Renter { get; set; }
 }

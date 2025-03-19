@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RentACar.Config;
 using RentACar.Data;
+using RentACar.DTOs;
 using RentACar.DTOs.Auth;
 using RentACar.Entities;
 using RentACar.Enums;
@@ -25,12 +26,12 @@ public class AuthService : IAuthService
         _jwtConfig = jwtConfig.Value;
     }
 
-    public async Task<User?> CreateUser(CreateUserDto createUserDto)
+    public async Task<Result<User>> CreateUser(CreateUserDto createUserDto)
     {
         var existingUser = await _userService.GetUserByUsername(createUserDto.Username);
-        if (existingUser != null)
+        if (existingUser is null)
         {
-            return null;
+            return Result<User>.Failure(new Error("Invalid username or password.", "InvalidUsernameOrPassword"));
         }
         
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(createUserDto.Password);
@@ -48,7 +49,7 @@ public class AuthService : IAuthService
         await _context.Users.AddAsync(newUser);
         await _context.SaveChangesAsync();
 
-        return newUser;
+        return Result<User>.Success(newUser);
     }
 
     public async Task<TokenResponseDto?> Login(UserLoginDto userLoginDto)

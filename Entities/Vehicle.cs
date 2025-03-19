@@ -28,7 +28,7 @@ public class Vehicle
     public string Color { get; set; }
     
     [Column("price_per_day")]
-    public float PricePerDay { get; set; }
+    public double PricePerDay { get; set; }
     
     [Column("is_available")]
     public bool IsAvailable { get; set; }

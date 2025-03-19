@@ -5,7 +5,7 @@ public class VehicleDto
     public string Make { get; set; }
     public string Model { get; set; }
     public int Year { get; set; }
-    public float PricePerDay { get; set; }
+    public double PricePerDay { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }

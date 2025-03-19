@@ -30,31 +30,55 @@ public class VehicleController : ControllerBase
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> CreateVehicle([FromBody] CreateVehicleDto createVehicleDto)
     {
-         var vehicle = await _vehicleService.CreateVehicle(createVehicleDto);
+         var result = await _vehicleService.CreateVehicle(createVehicleDto);
 
-         return Ok(vehicle);
+         return result.Map<IActionResult>(
+             onFailure: error => BadRequest(error),
+             onSuccess: vehicle =>
+             {
+                 var vehicleDto = new VehicleDto
+                 {
+                     Make = vehicle.Make,
+                     Model = vehicle.Model,
+                     Year = vehicle.Year,
+                     CreatedAt = vehicle.CreatedAt,
+                     UpdatedAt = vehicle.UpdatedAt,
+                 };
+
+                 return Created("", new
+                 {
+                     Message = "New vehicle has been successfully created.",
+                     Vehicle = vehicleDto
+                 });
+             }
+         );
     }
     
     [HttpPut("{vehicleId}")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> UpdateVehicle(int vehicleId, [FromBody] CreateVehicleDto createVehicleDto)
     {
-         var vehicle = await _vehicleService.UpdateVehicle(vehicleId, createVehicleDto);
-         if (vehicle is null)
-         {
-             return BadRequest();
-         }
+         var result = await _vehicleService.UpdateVehicle(vehicleId, createVehicleDto);
 
-         var vehicleDto = new VehicleDto
-         {
-             Make = vehicle.Make,
-             Model = vehicle.Model,
-             Year = vehicle.Year,
-             CreatedAt = vehicle.CreatedAt,
-             UpdatedAt = vehicle.UpdatedAt,
-         };
-
-         return Ok(vehicle);
+         return result.Map<IActionResult>(
+             onFailure: error => BadRequest(error),
+             onSuccess: vehicle =>
+             {
+                 var vehicleDto = new VehicleDto
+                 {
+                     Make = vehicle.Make,
+                     Model = vehicle.Model,
+                     Year = vehicle.Year,
+                     CreatedAt = vehicle.CreatedAt,
+                     UpdatedAt = vehicle.UpdatedAt,
+                 };
+                 
+                 return Ok(new
+                 {
+                     Message = "Vehicle has been successfully deleted.",
+                     Vehicle = vehicleDto
+                 });
+             });
     }
 
 
@@ -63,16 +87,12 @@ public class VehicleController : ControllerBase
     public async Task<IActionResult> DeleteVehicle(int vehicleId)
     {
          var result = await _vehicleService.DeleteVehicle(vehicleId);
-         if (result is null)
-         {
-             return NotFound(new { message = "Vehicle not found." });
-         }
 
-         if (result is false)
-         {
-             return BadRequest(new { message = "Failed to delete the vehicle." });
-         }
-
-         return Ok(new { message = "Vehicle has been successfully deleted." });
+         return result.Map<IActionResult>(
+             onFailure: error => BadRequest(error),
+             onSuccess: _ => Ok(new {
+                 Message = "Vehicle has been successfully deleted."
+             })
+         );
     }
 }

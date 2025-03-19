@@ -51,7 +51,7 @@ public class RentalService : IRentalService
         try
         {
             var rentalDays = (endDate - startDate).Days;
-            var totalPrice = rentalDays * vehicle.PricePerDay;
+            double totalPrice = (double) rentalDays * vehicle.PricePerDay;
             Coupon? coupon = null;
 
             if (!string.IsNullOrEmpty(couponCode))

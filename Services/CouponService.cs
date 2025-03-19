@@ -9,10 +9,12 @@ namespace RentACar.Services;
 public class CouponService : ICouponService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<CouponService> _logger;
 
-    public CouponService(AppDbContext context)
+    public CouponService(AppDbContext context, ILogger<CouponService> logger)
     {
         _context = context;
+        _logger = logger;
     }
     
     public async Task<Coupon?> GetCouponById(int couponId)

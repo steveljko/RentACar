@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RentACar.Data;
+using RentACar.DTOs;
 using RentACar.DTOs.Vehicle;
 using RentACar.Entities;
 using RentACar.Enums;
@@ -64,12 +65,12 @@ public class VehicleService : IVehicleService
     {
         var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.Id == vehicleId);
         if (vehicle is null)
-            _logger.LogInformation("User tried to find non-existent vehicle with provided ID {id}.", vehicleId);
+            _logger.LogWarning("User tried to find non-existent vehicle with provided ID {id}.", vehicleId);
 
         return vehicle;
     }
     
-    public async Task<Vehicle?> CreateVehicle(CreateVehicleDto createVehicleDto)
+    public async Task<Result<Vehicle>> CreateVehicle(CreateVehicleDto createVehicleDto)
     {
         var vehicle = new Vehicle
         {
@@ -85,19 +86,26 @@ public class VehicleService : IVehicleService
         };
         
         await _context.Vehicles.AddAsync(vehicle);
-        await _context.SaveChangesAsync();
+        int result = await _context.SaveChangesAsync();
 
-        _logger.LogInformation("User created new vehicle with ID {id}.", vehicle.Id);
+        if (result > 0)
+        {
+            _logger.LogInformation("User created new vehicle with ID {id}.", vehicle.Id);
         
-        return vehicle;
+            return Result<Vehicle>.Success(vehicle);
+        }
+
+        _logger.LogWarning("User failed to create new vehicle!");
+        
+        return Result<Vehicle>.Failure(new Error("Vehicle cration failed!", "VehicleCreationFailed"));
     }
 
-    public async Task<Vehicle?> UpdateVehicle(int vehicleId, CreateVehicleDto createVehicleDto)
+    public async Task<Result<Vehicle>> UpdateVehicle(int vehicleId, CreateVehicleDto createVehicleDto)
     {
         var vehicle = await GetVehicleById(vehicleId);
         if (vehicle is null)
         {
-            return null;
+            return Result<Vehicle>.Failure(new Error("Vehicle not found.", "VehicleNotFound"));
         }
  
         vehicle.Make = createVehicleDto.Make;
@@ -109,19 +117,26 @@ public class VehicleService : IVehicleService
         vehicle.UpdatedAt = DateTime.UtcNow;
  
         _context.Vehicles.Update(vehicle);
-        await _context.SaveChangesAsync();
- 
-        _logger.LogInformation("User updated vehicle with ID {id}.", vehicle.Id);
+        int result = await _context.SaveChangesAsync();
+
+        if (result > 0)
+        {
+            _logger.LogInformation("User updated vehicle with ID {id}.", vehicle.Id);
         
-        return vehicle;
+            return Result<Vehicle>.Success(vehicle);
+        }
+ 
+        _logger.LogWarning("User failed to update vehicle!");
+        
+        return Result<Vehicle>.Failure(new Error("Vehicle update failed!", "VehicleUpdateFailed"));
     }
     
-    public async Task<bool?> DeleteVehicle(int vehicleId)
+    public async Task<Result<Vehicle>> DeleteVehicle(int vehicleId)
     {
         var vehicle = await GetVehicleById(vehicleId);
         if (vehicle is null)
         {
-            return null;
+            return Result<Vehicle>.Failure(new Error("Vehicle not found.", "VehicleNotFound"));
         }
 
         _context.Vehicles.Remove(vehicle);
@@ -131,12 +146,14 @@ public class VehicleService : IVehicleService
             await _context.SaveChangesAsync();
             
             _logger.LogInformation("User deleted vehicle with ID {id}.", vehicle.Id);
+
+            return Result<Vehicle>.Success(vehicle);
         }
         catch (DbUpdateException _)
         {
-            return false;
+            _logger.LogWarning("User failed to delete vehicle!");
+            
+            return Result<Vehicle>.Failure(new Error("Failed to delete the vehicle.", "VehicleDeleteFailed"));
         }
-
-        return true;
     }
 }

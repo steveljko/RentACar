@@ -21,21 +21,14 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateUserDto createUserDto)
     {
-        var user = await _authService.CreateUser(createUserDto);
-        if (user is null)
-        {
-            return BadRequest(new { Message = "User already exists. " });
-        }
+        var result = await _authService.CreateUser(createUserDto);
 
-        var response = new UserDto()
-        {
-            Name = user.Name,
-            Username = user.Username,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt,
-        };
-        
-        return Created(string.Empty, response);
+        return result.Map<IActionResult>(
+            onFailure: error => BadRequest(error),
+            onSuccess: _ => Created("", new {
+                Message = "Successfuly created new account."
+            })
+        );
     }
     
     [HttpPost("login")]

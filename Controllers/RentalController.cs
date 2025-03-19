@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using RentACar.DTOs;
 using RentACar.DTOs.Auth;
 using RentACar.DTOs.Vehicle;
+using RentACar.Enums;
 using RentACar.Services;
 
 namespace RentACar.Controllers;
@@ -20,6 +21,15 @@ public class RentalController : ControllerBase
         _rentalService = rentalService;
     }
 
+    [HttpGet]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    public async Task<IActionResult> ListAllRentalsForToday()
+    {
+        var rentals = await _rentalService.ListAllRentalsForToday();
+
+        return Ok(rentals);
+    }
+
     [HttpPost("{vehicleId}")]
     [Authorize]
     public async Task<IActionResult> Rent(int vehicleId, [FromBody] CreateRentalDto createRentalDto)
@@ -34,7 +44,7 @@ public class RentalController : ControllerBase
 
         return result.Map<IActionResult>(
             onFailure: error => BadRequest(error),
-            onSuccess: rental => Ok(new {
+            onSuccess: rental => Created("", new {
                 Message = "Vehicle is succesfully rented.",
                 Rental = rental
             })
