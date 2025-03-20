@@ -13,25 +13,20 @@ public class DateGreaterThanAttribute : ValidationAttribute
     
     protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
     {
-        var startDateProperty = validationContext.ObjectType.GetProperty(_property);
-        if (startDateProperty == null)
+        var currentValue = (DateTime?) value;
+        
+        var comparisonValue = (DateTime?) validationContext.ObjectType
+            .GetProperty(_property)?
+            .GetValue(validationContext.ObjectInstance);
+        
+        if (currentValue.HasValue && comparisonValue.HasValue)
         {
-            throw new InvalidOperationException($"Unknown property: {_property}");
+            if (currentValue <= comparisonValue)
+            {
+                return new ValidationResult(ErrorMessage);
+            }
         }
         
-        if (startDateProperty.PropertyType != typeof(DateTime))
-        {
-            throw new InvalidOperationException($"Property {_property} is not of type DateTime.");
-        }
-    
-        var startDateValue = (DateTime) startDateProperty.GetValue(validationContext.ObjectInstance);
-        var endDateValue = (DateTime) value;
-    
-        if (endDateValue <= startDateValue)
-        {
-            return new ValidationResult(ErrorMessage ?? $"{_property} must be greater than {startDateProperty.Name}.");
-        }
-    
         return ValidationResult.Success;
     }
 }
