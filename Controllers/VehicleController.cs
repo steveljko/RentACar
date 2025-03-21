@@ -18,10 +18,9 @@ public class VehicleController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetVehicles(string? make, FuelType? fuelType, int? priceStart,
-        int? priceEnd, DateTime? startDate, DateTime? endDate)
+    public async Task<IActionResult> GetVehicles([FromQuery] FilterVehiclesDto filterVehiclesDto)
     {
-        var vehicles = await _vehicleService.GetVehicles(make, fuelType, priceStart, priceEnd, startDate, endDate);
+        var vehicles = await _vehicleService.GetVehicles(filterVehiclesDto);
 
         return Ok(vehicles);
     }

@@ -61,6 +61,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         });
 });
 
+builder.Services.AddStackExchangeRedisCache(ro =>
+{
+    string conn = builder.Configuration.GetConnectionString("Redis");
+    ro.Configuration = conn;
+});
+
 builder.Services.Configure<JwtConfiguration>(builder.Configuration.GetSection("JWT"));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

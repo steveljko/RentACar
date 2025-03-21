@@ -26,6 +26,16 @@
     networks:
       - app
   
+  cache:
+    image: redis:latest
+    container_name: rentacar-cache
+    ports:
+      - 6379:6379
+    volumes:
+      - ./containers/redis:/data
+    networks:
+      - app
+  
   seq:
     image: datalust/seq
     container_name: rentacar-seq

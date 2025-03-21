@@ -1,4 +1,7 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using RentACar.Data;
 using RentACar.DTOs;
 using RentACar.DTOs.Vehicle;
@@ -10,52 +13,54 @@ namespace RentACar.Services;
 public class VehicleService : IVehicleService
 {
     private readonly AppDbContext _context;
+    private readonly IDistributedCache _cache;
     private readonly ILogger<VehicleService> _logger;
 
-    public VehicleService(AppDbContext context, ILogger<VehicleService> logger)
+    public VehicleService(AppDbContext context, IDistributedCache cache, ILogger<VehicleService> logger)
     {
         _context = context;
+        _cache = cache;
         _logger = logger;
     }
 
-    public async Task<List<Vehicle>> GetVehicles(
-        string? make, FuelType? fuelType,
-        int? priceStart, int? priceEnd,
-        DateTime? startDate, DateTime? endDate)
+    public async Task<List<Vehicle>> GetVehicles(FilterVehiclesDto filterVehiclesDto)
     {
+        string cacheKey = "vehicles:all";
         var q = _context.Vehicles.AsQueryable();
         
-        if (make != null)
+        if (filterVehiclesDto.IsEmpty())
         {
-            q = q.Where(v => v.Make == make);
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+            
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                var cachedVehicles = JsonSerializer.Deserialize<List<Vehicle>>(cachedData);
+                _logger.LogInformation("User fetched {vehiclesCount} vehicles from cache.", cachedVehicles.Count);
+                return cachedVehicles;
+            }
+            
+            return await q.ToListAsync();
         }
         
-        if (fuelType.HasValue)
-        {
-            q = q.Where(v => v.FuelType == fuelType);
-        }
-        
-        if (priceStart.HasValue)
-        {
-            q = q.Where(v => v.PricePerDay >= priceStart);
-        }
-        
-        if (priceEnd.HasValue)
-        {
-            q = q.Where(v => v.PricePerDay <= priceEnd);
-        }
-        
-        if (startDate.HasValue && endDate.HasValue) {
+        // Filter query
+        q = q
+            .Where(v => filterVehiclesDto.Make == null || v.Make == filterVehiclesDto.Make)
+            .Where(v => !filterVehiclesDto.FuelType.HasValue || v.FuelType == filterVehiclesDto.FuelType)
+            .Where(v => !filterVehiclesDto.PriceStart.HasValue || v.PricePerDay >= filterVehiclesDto.PriceStart)
+            .Where(v => !filterVehiclesDto.PriceEnd.HasValue || v.PricePerDay <= filterVehiclesDto.PriceEnd);
+            
+        if (filterVehiclesDto.StartDate.HasValue && filterVehiclesDto.EndDate.HasValue) {
             var rentedVehicleIds = await _context.Rentals
-                .Where(r => r.StartDate < endDate && r.EndDate > startDate)
+                .Where(r => r.StartDate < filterVehiclesDto.EndDate && r.EndDate > filterVehiclesDto.StartDate)
                 .Select(r => r.VehicleId)
                 .ToListAsync();
 
             q = q.Where(v => !rentedVehicleIds.Contains(v.Id));
         }
         
-        var vehicles = await q.ToListAsync();
         
+        var vehicles = await q.ToListAsync();
+        await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(vehicles), new DistributedCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(30)));
         _logger.LogInformation("User fetched {vehiclesCount} vehicles.", vehicles.Count);
         
         return vehicles;
@@ -91,6 +96,8 @@ public class VehicleService : IVehicleService
         if (result > 0)
         {
             _logger.LogInformation("User created new vehicle with ID {id}.", vehicle.Id);
+            
+            await _cache.RemoveAsync("vechiles:all");
         
             return Result<Vehicle>.Success(vehicle);
         }
