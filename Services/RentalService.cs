@@ -20,14 +20,20 @@ public class RentalService : IRentalService
         _couponService = couponService;
     }
 
-    // TODO: Set 'StartDate' and 'EndDate' to DateOnly format
     public async Task<List<Rental>> ListAllRentalsForToday()
     {
-        var today = DateTime.UtcNow;
-
-        return await _context.Rentals
-            .Where(r => r.StartDate == today)
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+        
+        var rentals = await _context.Rentals
+            .Include(r => r.Vehicle)
+            .Include(r => r.Renter)
+            .Where(r => r.StartDate >= today && r.StartDate < tomorrow)
             .ToListAsync();
+        
+        _logger.LogInformation("Found {count} rentals for today.", rentals.Count);
+
+        return rentals;
     }
     
     public async Task<Result<Rental>> CreateRental(int vehicleId, int userId, DateTime startDate, DateTime endDate, string? couponCode = null)
@@ -46,12 +52,12 @@ public class RentalService : IRentalService
         }
         
         
-        await using var transaction = await _context.Database.BeginTransactionAsync();
+        using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
             var rentalDays = (endDate - startDate).Days;
-            double totalPrice = (double) rentalDays * vehicle.PricePerDay;
+            double totalPrice = rentalDays * vehicle.PricePerDay;
             Coupon? coupon = null;
 
             if (!string.IsNullOrEmpty(couponCode))
@@ -99,6 +105,8 @@ public class RentalService : IRentalService
             {
                 await CreateRedamptionForUser(rental, coupon, userId);
             }
+            
+            await transaction.CommitAsync();
 
             _logger.LogInformation(
                 "User successfully made rental for vehicle ID {vehicleId} from {startDate} to {endDate}.", vehicleId,
