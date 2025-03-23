@@ -97,7 +97,7 @@ public class VehicleService : IVehicleService
         {
             _logger.LogInformation("User created new vehicle with ID {id}.", vehicle.Id);
             
-            await _cache.RemoveAsync("vechiles:all");
+            await _cache.RemoveAsync("vehicles:all");
         
             return Result<Vehicle>.Success(vehicle);
         }
