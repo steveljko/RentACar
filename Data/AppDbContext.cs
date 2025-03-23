@@ -27,5 +27,9 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(r => r.RentedBy)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Coupon>()
+            .HasIndex(c => c.Code)
+            .IsUnique(true);
     }
 }
