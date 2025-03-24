@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -67,6 +69,19 @@ builder.Services.AddStackExchangeRedisCache(ro =>
     ro.Configuration = conn;
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    
+    options.AddPolicy("fixed", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString(),
+        partition => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromSeconds(10)
+        }));
+});
+
 builder.Services.Configure<JwtConfiguration>(builder.Configuration.GetSection("JWT"));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -120,6 +135,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

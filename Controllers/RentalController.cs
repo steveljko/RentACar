@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using RentACar.DTOs;
 using RentACar.DTOs.Auth;
 using RentACar.DTOs.Vehicle;
@@ -32,6 +33,7 @@ public class RentalController : ControllerBase
 
     [HttpPost("{vehicleId}")]
     [Authorize]
+    [EnableRateLimiting("fixed")]
     public async Task<IActionResult> Rent(int vehicleId, [FromBody] CreateRentalDto createRentalDto)
     {
         var user = await _userService.FetchCurrentUser();
@@ -53,6 +55,7 @@ public class RentalController : ControllerBase
 
     [HttpDelete("{rentalId}")]
     [Authorize]
+    [EnableRateLimiting("fixed")]
     public async Task<IActionResult> CancelRent(int rentalId)
     {
         var user = await _userService.FetchCurrentUser();

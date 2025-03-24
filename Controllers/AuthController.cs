@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using RentACar.DTOs.Auth;
 using RentACar.Services;
 
@@ -19,6 +20,7 @@ public class AuthController : ControllerBase
     }
     
     [HttpPost("register")]
+    [EnableRateLimiting("fixed")]
     public async Task<IActionResult> Register([FromBody] CreateUserDto createUserDto)
     {
         var result = await _authService.CreateUser(createUserDto);
@@ -32,6 +34,7 @@ public class AuthController : ControllerBase
     }
     
     [HttpPost("login")]
+    [EnableRateLimiting("fixed")]
     public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
     {
         var user = await _authService.Login(userLoginDto);
@@ -45,6 +48,7 @@ public class AuthController : ControllerBase
     
     [HttpGet("me")]
     [Authorize]
+    [EnableRateLimiting("fixed")]
     public async Task<IActionResult> Me()
     {
         var username = User.Identity?.Name;

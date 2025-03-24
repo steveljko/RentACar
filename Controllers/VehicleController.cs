@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using RentACar.DTOs.Vehicle;
 using RentACar.Enums;
 using RentACar.Services;
@@ -18,6 +19,7 @@ public class VehicleController : ControllerBase
     }
 
     [HttpGet]
+    [EnableRateLimiting("fixed")]
     public async Task<IActionResult> GetVehicles([FromQuery] FilterVehiclesDto filterVehiclesDto)
     {
         var vehicles = await _vehicleService.GetVehicles(filterVehiclesDto);
