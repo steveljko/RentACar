@@ -37,10 +37,10 @@ Before you begin, ensure you have the following installed on your machine:
 
 ### Step 1: Clone the Repository
 
-First, clone the Rent A Car API repository from GitHub (or your source control):
+First, clone the Rent A Car API repository from GitHub:
 
 ```bash
-git clone https://github.com/yourusername/rent-a-car-api.git
+git clone https://github.com/steveljko/rent-a-car-api.git
 cd rent-a-car-api
 ```
 
