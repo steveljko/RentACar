@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using RentACar.Data;
 using RentACar.DTOs;
 using RentACar.Entities;
@@ -8,13 +10,15 @@ namespace RentACar.Services;
 public class RentalService : IRentalService
 {
     private readonly AppDbContext _context;
+    private readonly IDistributedCache _cache;
     private readonly ILogger<RentalService> _logger;
     private readonly IVehicleService _vehicleService;
     private readonly ICouponService _couponService;
 
-    public RentalService(AppDbContext context, ILogger<RentalService> logger, IVehicleService vehicleService, ICouponService couponService)
+    public RentalService(AppDbContext context, IDistributedCache cache, ILogger<RentalService> logger, IVehicleService vehicleService, ICouponService couponService)
     {
         _context = context;
+        _cache = cache;
         _logger = logger;
         _vehicleService = vehicleService;
         _couponService = couponService;
@@ -22,6 +26,18 @@ public class RentalService : IRentalService
 
     public async Task<List<Rental>> ListAllRentalsForToday()
     {
+        string cacheKey = "rentals:today";
+        var cachedData = await _cache.GetStringAsync(cacheKey);
+
+        if (!string.IsNullOrEmpty(cachedData))
+        {
+            var cachedRentals = JsonSerializer.Deserialize<List<Rental>>(cachedData);
+            
+            _logger.LogInformation("Found {cachedRentals} rentals for today from cache.", cachedRentals.Count);
+            
+            return cachedRentals;
+        }
+
         var today = DateTime.UtcNow.Date;
         var tomorrow = today.AddDays(1);
         
@@ -31,7 +47,9 @@ public class RentalService : IRentalService
             .Where(r => r.StartDate >= today && r.StartDate < tomorrow)
             .ToListAsync();
         
-        _logger.LogInformation("Found {count} rentals for today.", rentals.Count);
+        await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(rentals), new DistributedCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(30)));
+        
+        _logger.LogInformation("Found {count} rentals for today from DB.", rentals.Count);
 
         return rentals;
     }
@@ -107,6 +125,8 @@ public class RentalService : IRentalService
             }
             
             await transaction.CommitAsync();
+            
+            await _cache.RemoveAsync("rentals:today");
 
             _logger.LogInformation(
                 "User successfully made rental for vehicle ID {vehicleId} from {startDate} to {endDate}.", vehicleId,
